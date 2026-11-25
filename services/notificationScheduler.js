@@ -93,10 +93,14 @@ const sendPowerThoughtNotifications = async () => {
       messages.push({
         to: user.pushToken,
         sound: 'default',
+        // This legacy sender has no per-device read ledger. Show a pending
+        // indicator while closed; the app reconciles the exact unread total.
+        badge: 1,
         title: 'New Power Thought 💪',
         body: notificationBody,
         data: { 
           type: 'powerThought',
+          route: '/mental/thoughts',
           powerThoughtId: thought._id.toString(),
           date: thought.date,
           thought: thought.thought
@@ -107,7 +111,7 @@ const sendPowerThoughtNotifications = async () => {
     const result = await sendNotifications(messages);
     
     // Mark as notified
-    await PowerThought.findByIdAndUpdate(thought._id, { notificationSent: true });
+    if (result.sent > 0) await PowerThought.findByIdAndUpdate(thought._id, { notificationSent: true });
     logger.info(`Power thought notification sent for ${today}: ${result.sent} successful, ${result.failed} failed`);
   }
 };
@@ -148,10 +152,14 @@ const sendArticleNotifications = async () => {
       messages.push({
         to: user.pushToken,
         sound: 'default',
+        // This legacy sender has no per-device read ledger. Show a pending
+        // indicator while closed; the app reconciles the exact unread total.
+        badge: 1,
         title: `New Article: ${article.title}`,
         body: notificationBody,
         data: { 
           type: 'article',
+          route: `/article/${encodeURIComponent(article._id.toString())}`,
           articleId: article._id.toString(),
           category: article.category,
           date: article.date,
@@ -163,7 +171,7 @@ const sendArticleNotifications = async () => {
     const result = await sendNotifications(messages);
     
     // Mark as notified
-    await Article.findByIdAndUpdate(article._id, { notificationSent: true });
+    if (result.sent > 0) await Article.findByIdAndUpdate(article._id, { notificationSent: true });
     logger.info(`Article notification sent for "${article.title}" on ${today}: ${result.sent} successful, ${result.failed} failed`);
   }
 };
